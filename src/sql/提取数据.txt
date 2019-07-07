@@ -1,0 +1,29 @@
+create table g4.baso_101004E as 
+select * from (
+select l.id,l.test_no,l.patient_id,l.visit_id,l.sex,
+l.age,l.dob,l.lab_item_code,l.lab_item_name,
+l.lab_item_result,l.lab_item_units,
+l.charttime,row_number()over(partition by l.id order by l.charttime) as rn
+from (
+select 
+lt.patient_id||'_'||lt.visit_id as id,
+lt.test_no,lt.patient_id,lt.visit_id,lt.sex,lt.age,lt.dob,
+lr.lab_item_name,lr.lab_item_code,
+lr.lab_item_result,lr.lab_item_units,a
+lr.charttime
+from wjzz.emg104_lab_test_master lt 
+inner join wjzz.emg104_lab_result lr 
+on lt.test_no = lr.test_no  
+where lr.lab_item_code in('101004E') 
+) l
+inner join (
+select 
+v.patient_id||'_'||v.visit_id as id,v.patient_id,v.visit_id,v.temperature,v.f
+from g4.emg104_vitalsigns v 
+where v.f = 1 
+and v.temperature >=37.2 and v.temperature < 42
+) p 
+on l.id = p.id and l.patient_id = p.patient_id and l.visit_id = p.visit_id
+)
+where rn=1
+;
